@@ -19,18 +19,24 @@
       </section>
       <section class="side-sec grow">
         <div class="side-head">
-          <h2>Pastas</h2>
+          <h2>Pastas e documentos</h2>
           <button class="icon-btn" id="newFolderBtn" title="Nova pasta no fluxo"><i data-icon="folderPlus"></i></button>
         </div>
-        <input id="folderSearch" class="text" type="search" placeholder="Buscar pasta" autocomplete="off" />
+        <input id="folderSearch" class="text" type="search" placeholder="Buscar pasta ou documento" autocomplete="off" />
         <div id="folders" class="folders"></div>
-        <p class="hint">Arraste uma pasta para o quadro. Puxe a bolinha da borda de um bloco até outro para criar uma seta.</p>
+        <p class="hint">
+          Arraste uma pasta para o quadro. Arraste um documento para cima de um bloco para guardá-lo naquela pasta. Puxe a bolinha da borda de um bloco até
+          outro para criar uma seta.
+        </p>
       </section>
     </aside>
 
     <main class="stage">
       <div class="stage-head">
-        <div class="board-title" id="boardTitle"></div>
+        <div class="head-left">
+          <button class="btn" id="backBtn" title="Voltar para as pastas e documentos"><i data-icon="back"></i>Pastas</button>
+          <div class="board-title" id="boardTitle"></div>
+        </div>
         <div class="tools">
           <button class="icon-btn" id="snapBtn" title="Encaixar na grade"><i data-icon="grid"></i></button>
           <span class="tool-sep"></span>

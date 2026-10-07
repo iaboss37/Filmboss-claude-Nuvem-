@@ -506,3 +506,99 @@ input.inline-edit {
 .viewport.drop-ok {
   box-shadow: inset 0 0 0 3px var(--accent);
 }
+
+/* ---------- voltar + documentos na lateral ---------- */
+.head-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.folder-item .twisty {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-left: -6px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--text-3);
+  cursor: pointer;
+  transition: transform 0.12s;
+}
+.folder-item .twisty.open {
+  transform: rotate(90deg);
+}
+.folder-item .twisty.empty {
+  visibility: hidden;
+}
+.folder-item .count {
+  color: var(--text-3);
+  font-size: 11px;
+}
+.doc-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 0 6px 0 8px;
+  border-radius: 7px;
+  color: var(--text);
+  cursor: grab;
+  font-size: 12.5px;
+}
+.doc-item:hover {
+  background: var(--hover);
+}
+.doc-item .name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--text-2);
+  cursor: pointer;
+  font: 700 11px var(--font);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.group-head:hover {
+  background: var(--hover);
+}
+.group-head .chev {
+  display: inline-flex;
+  transition: transform 0.12s;
+}
+.group-head.open .chev {
+  transform: rotate(90deg);
+}
+.group-head .count {
+  margin-left: auto;
+  font-weight: 500;
+}
+.show-more {
+  margin: 4px 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 12px;
+}
+.node.doc-target {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.35);
+}

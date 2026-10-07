@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pastas Docs</title>
+    <link rel="icon" href="icons/icon32.png" />
+    <link rel="stylesheet" href="ui.css" />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <div class="brand"><img src="icons/icon32.png" width="26" height="26" alt="" /><span>Pastas Docs</span></div>
+      <label class="search">
+        <i data-icon="search"></i>
+        <input id="q" type="search" placeholder="Buscar em todos os documentos e pastas" autocomplete="off" />
+      </label>
+      <div class="bar-right">
+        <div class="seg" id="modeSeg" title="Como ver o Google Docs">
+          <button data-mode="full" title="As pastas ocupam a tela inicial do Google Docs">Tela cheia</button>
+          <button data-mode="side" title="Google Docs normal, com as pastas no painel ao lado">Lateral</button>
+          <button data-mode="off" title="Google Docs como sempre, sem a extensão">Tradicional</button>
+        </div>
+        <button class="btn primary" id="newDoc"><i data-icon="plus"></i>Novo documento</button>
+      </div>
+    </header>
+    <div class="layout">
+      <aside class="nav" id="nav"></aside>
+      <main class="main">
+        <div class="main-head" id="head"></div>
+        <div class="selbar" id="selbar" hidden></div>
+        <div class="main-body" id="main"></div>
+      </main>
+    </div>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

@@ -1,4 +1,5 @@
 import * as S from './store.js';
+import * as C from './common.js';
 import { icons, h, svg, showMenu, confirmBox, promptBox, toast, inlineEdit } from './ui.js';
 
 const store = S.createStore();
@@ -34,6 +35,8 @@ const ui = {
   pop: null, // id do bloco com a lista de documentos aberta
   act: null, // interação em andamento (pan, arrastar bloco, ligar seta)
   folderQ: '',
+  treeOpen: new Set(pref('flowTree', [])),
+  looseLimit: 100,
   geo: {}, // posição e tamanho de cada bloco no quadro
   editing: false,
 };
@@ -112,34 +115,106 @@ function renderBoards() {
 
 function renderFolders() {
   const s = st();
+  const all = store.docs();
+  const byFolder = C.docsByFolder(all);
+  const sort = s.prefs.sort;
   const onBoard = new Set(Object.values(board()?.nodes || {}).map((n) => n.folder));
   const q = norm(ui.folderQ);
   const rows = [];
-  const walk = (parent, depth) => {
-    for (const f of S.sorted(S.childFolders(s, parent), 'name')) {
-      if (!q || norm(f.name).includes(q))
+
+  const docItem = (d, depth) =>
+    h(
+      'div',
+      {
+        class: 'doc-item',
+        draggable: 'true',
+        'data-doc': d.id,
+        style: { paddingLeft: 8 + depth * 14 + 'px' },
+        title: d.title + ' (clique para abrir)',
+        onclick: () => S.openDoc(d.id, 'new'),
+      },
+      svg(icons.doc(15)),
+      h('span', { class: 'name' }, d.title),
+    );
+
+  if (q) {
+    for (const f of Object.values(s.folders)
+      .filter((f) => norm(f.name).includes(q))
+      .sort(S.byName))
+      rows.push(folderItem(f, 0, onBoard, byFolder, false));
+    for (const d of S.sorted(
+      all.filter((d) => norm(d.title).includes(q)),
+      sort,
+    ).slice(0, 200))
+      rows.push(docItem(d, 0));
+    if (!rows.length) rows.push(h('div', { class: 'hint' }, 'Nada encontrado.'));
+  } else {
+    const walk = (parent, depth) => {
+      for (const f of S.sorted(S.childFolders(s, parent), 'name')) {
+        const isOpen = ui.treeOpen.has(f.id);
+        rows.push(folderItem(f, depth, onBoard, byFolder, isOpen));
+        if (!isOpen) continue;
+        walk(f.id, depth + 1);
+        for (const d of S.sorted(byFolder.get(f.id) || [], sort)) rows.push(docItem(d, depth + 1));
+      }
+    };
+    walk(null, 0);
+    if (!Object.keys(s.folders).length) rows.push(h('div', { class: 'hint' }, 'Nenhuma pasta ainda. Crie no botão acima.'));
+    const loose = S.sorted(byFolder.get(null) || [], sort);
+    const looseOpen = !s.prefs.looseCollapsed;
+    rows.push(
+      h(
+        'button',
+        { class: 'group-head' + (looseOpen ? ' open' : ''), onclick: () => store.update((d) => (d.prefs.looseCollapsed = !d.prefs.looseCollapsed)) },
+        h('span', { class: 'chev' }, svg(icons.chevron)),
+        'Fora das pastas',
+        h('span', { class: 'count' }, String(loose.length)),
+      ),
+    );
+    if (looseOpen) {
+      for (const d of loose.slice(0, ui.looseLimit)) rows.push(docItem(d, 0));
+      if (loose.length > ui.looseLimit)
         rows.push(
-          h(
-            'div',
-            {
-              class: 'folder-item',
-              draggable: 'true',
-              'data-folder': f.id,
-              style: { paddingLeft: 8 + (q ? 0 : depth * 14) + 'px', '--c': f.color },
-              title: onBoard.has(f.id) ? 'Já está no quadro (clique para ver)' : 'Arraste para o quadro ou clique para adicionar',
-              onclick: () => addOrFocus(f.id),
-            },
-            svg(icons.folder(16)),
-            h('span', { class: 'name' }, f.name),
-            onBoard.has(f.id) ? h('span', { class: 'on-board' }) : null,
-          ),
+          h('button', { class: 'show-more', onclick: () => ((ui.looseLimit += 200), renderFolders()) }, `Mostrar mais (${loose.length - ui.looseLimit})`),
         );
-      walk(f.id, depth + 1);
     }
-  };
-  walk(null, 0);
-  $('#folders').replaceChildren(
-    ...(rows.length ? rows : [h('div', { class: 'hint' }, q ? 'Nenhuma pasta encontrada.' : 'Nenhuma pasta ainda. Crie no botão acima.')]),
+  }
+  const box = $('#folders');
+  const scroll = box.scrollTop;
+  box.replaceChildren(...rows);
+  box.scrollTop = scroll;
+}
+
+function folderItem(f, depth, onBoard, byFolder, isOpen) {
+  const s = st();
+  const hasKids = S.childFolders(s, f.id).length || byFolder.get(f.id)?.length;
+  return h(
+    'div',
+    {
+      class: 'folder-item',
+      draggable: 'true',
+      'data-folder': f.id,
+      style: { paddingLeft: 8 + depth * 14 + 'px', '--c': f.color },
+      title: onBoard.has(f.id) ? 'Já está no quadro (clique para ver)' : 'Arraste para o quadro ou clique para adicionar',
+      onclick: () => addOrFocus(f.id),
+    },
+    h(
+      'button',
+      {
+        class: 'twisty' + (isOpen ? ' open' : '') + (hasKids ? '' : ' empty'),
+        title: isOpen ? 'Esconder documentos' : 'Mostrar documentos',
+        onclick: (e) => {
+          e.stopPropagation();
+          ui.treeOpen.has(f.id) ? ui.treeOpen.delete(f.id) : ui.treeOpen.add(f.id);
+          setPref('flowTree', [...ui.treeOpen]);
+          renderFolders();
+        },
+      },
+      svg(icons.chevron),
+    ),
+    svg(icons.folder(16)),
+    h('span', { class: 'name' }, f.name),
+    onBoard.has(f.id) ? h('span', { class: 'on-board', title: 'Está no quadro' }) : h('span', { class: 'count' }, String(C.countDeep(s, byFolder, f.id) || '')),
   );
 }
 
@@ -912,21 +987,55 @@ document.addEventListener('keydown', (e) => {
 // ---------- arrastar pastas da lista para o quadro ----------
 
 $('#folders').addEventListener('dragstart', (e) => {
+  const doc = e.target.closest('[data-doc]');
+  if (doc) {
+    e.dataTransfer.setData('application/x-pastas-doc', doc.dataset.doc);
+    e.dataTransfer.setData('text/uri-list', S.DOC_URL(doc.dataset.doc));
+    e.dataTransfer.effectAllowed = 'copyMove';
+    return;
+  }
   const item = e.target.closest('[data-folder]');
   if (!item) return;
   e.dataTransfer.setData('application/x-pastas-folder', item.dataset.folder);
   e.dataTransfer.effectAllowed = 'copy';
 });
+
+// Documento arrastado: o bloco embaixo do cursor acende; soltar guarda o doc naquela pasta.
+function docTargetAt(e) {
+  const node = document.elementFromPoint(e.clientX, e.clientY)?.closest('.node');
+  nodesEl.querySelectorAll('.doc-target').forEach((n) => n !== node && n.classList.remove('doc-target'));
+  node?.classList.add('doc-target');
+  return node;
+}
+
 vp.addEventListener('dragover', (e) => {
-  if (!e.dataTransfer.types.includes('application/x-pastas-folder')) return;
-  e.preventDefault();
-  vp.classList.add('drop-ok');
+  const types = e.dataTransfer.types;
+  if (types.includes('application/x-pastas-folder')) {
+    e.preventDefault();
+    vp.classList.add('drop-ok');
+  } else if (types.includes('application/x-pastas-doc')) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = docTargetAt(e) ? 'move' : 'none';
+  }
 });
 vp.addEventListener('dragleave', (e) => {
-  if (!vp.contains(e.relatedTarget)) vp.classList.remove('drop-ok');
+  if (!vp.contains(e.relatedTarget)) {
+    vp.classList.remove('drop-ok');
+    nodesEl.querySelectorAll('.doc-target').forEach((n) => n.classList.remove('doc-target'));
+  }
 });
-vp.addEventListener('drop', (e) => {
+vp.addEventListener('drop', async (e) => {
   vp.classList.remove('drop-ok');
+  const docId = e.dataTransfer.getData('application/x-pastas-doc');
+  if (docId) {
+    e.preventDefault();
+    const node = docTargetAt(e);
+    node?.classList.remove('doc-target');
+    const folder = node && board()?.nodes[node.dataset.node]?.folder;
+    if (!folder) return toast('Solte o documento em cima de um bloco');
+    await C.moveDocsFlow(store, [docId], folder);
+    return;
+  }
   const fid = e.dataTransfer.getData('application/x-pastas-folder');
   if (!fid) return;
   e.preventDefault();
@@ -940,6 +1049,7 @@ document
   .forEach((i) => i.replaceWith(svg(typeof icons[i.dataset.icon] === 'function' ? icons[i.dataset.icon](16) : icons[i.dataset.icon])));
 
 $('#newBoardBtn').addEventListener('click', newBoard);
+$('#backBtn').addEventListener('click', () => (location.href = 'app.html' + location.search));
 $('#newFolderBtn').addEventListener('click', () => createFolderAt(viewCenter()));
 $('#zoomIn').addEventListener('click', () => zoomAt(vp.clientWidth / 2, vp.clientHeight / 2, ui.view.z * 1.2));
 $('#zoomOut').addEventListener('click', () => zoomAt(vp.clientWidth / 2, vp.clientHeight / 2, ui.view.z / 1.2));

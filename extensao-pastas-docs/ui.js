@@ -39,6 +39,12 @@ export const icons = {
   cloud: stroke('<path d="M17.5 19H8a5 5 0 1 1 1-9.9A6 6 0 0 1 20.5 11 4 4 0 0 1 17.5 19z"/>', 15),
   history: stroke('<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>', 15),
   sortAz: stroke('<path d="M3 6h9M3 12h6M3 18h4M17 4v16M13.5 16.5 17 20l3.5-3.5"/>', 15),
+  home: stroke('<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>'),
+  layout: stroke('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/>'),
+  docs: stroke('<path d="M8 3h7l4 4v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M15 3v4h4M4 7v12a2 2 0 0 0 2 2h9"/>'),
+  inbox: stroke(
+    '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z"/>',
+  ),
   hand: stroke(
     '<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12M11 11V4a1.5 1.5 0 0 1 3 0v7M14 11V5.5a1.5 1.5 0 0 1 3 0V13M17 9.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-2a6 6 0 0 1-5-2.7L4.3 14.8a1.6 1.6 0 0 1 2.6-1.8L8 14.5"/>',
     15,

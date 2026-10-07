@@ -10,6 +10,7 @@
 export const DOC_URL = (id) => `https://docs.google.com/document/d/${id}/edit`;
 
 const LOCAL_KEY = 'state';
+const INDEX_KEY = 'docIndex';
 const BACKUPS_KEY = 'backups';
 const SYNC_STATUS_KEY = 'syncStatus';
 const CHUNK = 7800;
@@ -25,7 +26,8 @@ export function emptyState() {
     folders: {},
     docs: {},
     boards: {},
-    prefs: { sort: 'name', view: 'list', looseCollapsed: false },
+    hidden: [], // documentos tirados da lista (não voltam pelo histórico)
+    prefs: { sort: 'recent', view: 'list', looseCollapsed: false, mode: 'full', m2: 1 },
   };
 }
 
@@ -45,6 +47,10 @@ export function docIdFromUrl(url) {
 export function cleanTitle(title) {
   return (title || '').replace(/\s+[-–—]\s+(Google Docs|Documentos Google|Google Documentos|Documentos do Google)\s*$/i, '').trim();
 }
+
+// Títulos que não dizem nada (página ainda carregando, tela de login etc.).
+export const GENERIC_TITLE =
+  /^(google docs|documentos google|google documentos|documentos do google|docs|sign-in|fazer login|untitled document|documento sem título)?$/i;
 
 // ---------- compressão para o sync ----------
 
@@ -81,13 +87,21 @@ async function decode(b64) {
 export function normalize(s) {
   const base = emptyState();
   if (!s || typeof s !== 'object') return base;
+  const prefs = { ...base.prefs, ...(s.prefs || {}) };
+  if (!prefs.m2) {
+    // versão 2: documentos na mesma ordem do Google Docs e tela cheia por padrão
+    prefs.sort = 'recent';
+    prefs.mode = 'full';
+    prefs.m2 = 1;
+  }
   return {
     v: 1,
     updatedAt: s.updatedAt || 0,
     folders: s.folders || {},
     docs: s.docs || {},
     boards: s.boards || {},
-    prefs: { ...base.prefs, ...(s.prefs || {}) },
+    hidden: s.hidden || [],
+    prefs,
   };
 }
 
@@ -195,24 +209,36 @@ export async function loadBest() {
 
 export function createStore() {
   let state = emptyState();
+  let index = emptyIndex();
   const subs = new Set();
   const emit = () => subs.forEach((fn) => fn(state));
 
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area !== 'local' || !changes[LOCAL_KEY]) return;
-    const next = changes[LOCAL_KEY].newValue;
-    if (!next || next.updatedAt === state.updatedAt) return;
-    state = normalize(next);
-    emit();
+    if (area !== 'local') return;
+    let changed = false;
+    if (changes[INDEX_KEY]) {
+      index = changes[INDEX_KEY].newValue || emptyIndex();
+      changed = true;
+    }
+    const next = changes[LOCAL_KEY]?.newValue;
+    if (next && next.updatedAt !== state.updatedAt) {
+      state = normalize(next);
+      changed = true;
+    }
+    if (changed) emit();
   });
 
   return {
     async init() {
-      state = await loadBest();
+      [state, index] = await Promise.all([loadBest(), readIndex()]);
       emit();
+      chrome.runtime.sendMessage({ type: 'reindex' }).catch(() => {});
       return state;
     },
     get: () => state,
+    index: () => index,
+    // Todos os documentos: os salvos + os que o Chrome já viu abertos.
+    docs: () => allDocs(state, index),
     subscribe(fn) {
       subs.add(fn);
       return () => subs.delete(fn);
@@ -247,10 +273,78 @@ export function childDocs(s, folder) {
 
 const collator = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
 export const byName = (a, b) => collator.compare(a.name || a.title || '', b.name || b.title || '');
-export const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0) || byName(a, b);
+export const byRecent = (a, b) => (b.key ?? -1) - (a.key ?? -1) || byName(a, b);
+export const byOrder = (a, b) => (a.order ?? 1e15) - (b.order ?? 1e15) || byRecent(a, b);
 
+// 'recent' = mesma ordem do Google Docs (abertos por último primeiro). Pastas ficam em A–Z nesse modo.
 export function sorted(list, mode) {
-  return [...list].sort(mode === 'manual' ? byOrder : byName);
+  return [...list].sort(mode === 'manual' ? byOrder : mode === 'recent' ? byRecent : byName);
+}
+
+// ---------- índice de documentos (histórico do Chrome + tela inicial do Docs) ----------
+//
+// docIndex = { docs: { id: { t: título, last: último acesso } }, home: { at, ids: [...] } }
+// Fica só neste computador (não ocupa o espaço da sincronização) e nunca é apagado,
+// então um documento continua aparecendo mesmo depois que o histórico expira.
+
+export function emptyIndex() {
+  return { docs: {}, home: null };
+}
+
+export async function readIndex() {
+  return (await chrome.storage.local.get(INDEX_KEY))[INDEX_KEY] || emptyIndex();
+}
+
+export async function writeIndex(ix) {
+  await chrome.storage.local.set({ [INDEX_KEY]: ix });
+}
+
+// Junta salvos + índice. Cada item ganha `key` para ordenar igual ao Google Docs.
+export function allDocs(s, ix) {
+  const hidden = new Set(s.hidden || []);
+  const home = ix?.home;
+  const rank = new Map((home?.ids || []).map((id, i) => [id, i]));
+  const out = new Map();
+  for (const [id, e] of Object.entries(ix?.docs || {})) {
+    if (hidden.has(id)) continue;
+    out.set(id, { id, title: e.t || 'Documento sem título', folder: null, saved: false, last: e.last || 0 });
+  }
+  for (const d of Object.values(s.docs)) {
+    const e = ix?.docs?.[d.id];
+    out.set(d.id, { ...d, title: d.custom || !e?.t ? d.title : e.t, saved: true, last: e?.last || d.added || 0 });
+  }
+  for (const d of out.values()) {
+    // Abertos depois da última visita à tela inicial vêm primeiro; depois a ordem que o Google mostrou.
+    d.key = home && d.last <= home.at && rank.has(d.id) ? home.at - rank.get(d.id) : d.last;
+  }
+  return [...out.values()];
+}
+
+// Garante que o documento existe no estado (ex.: veio do histórico) antes de mexer nele.
+export function ensureDoc(s, id, ix) {
+  if (!s.docs[id]) addDoc(s, id, ix?.docs?.[id]?.t, null);
+  return s.docs[id];
+}
+
+export function moveDocs(s, ids, folder, ix) {
+  let n = 0;
+  for (const id of ids) {
+    const existed = !!s.docs[id];
+    if (!existed) {
+      addDoc(s, id, ix?.docs?.[id]?.t, folder);
+      n++;
+    } else if (moveItem(s, 'doc', id, folder)) n++;
+  }
+  return n;
+}
+
+export function hideDocs(s, ids) {
+  const hidden = new Set(s.hidden || []);
+  for (const id of ids) {
+    delete s.docs[id];
+    hidden.add(id);
+  }
+  s.hidden = [...hidden];
 }
 
 function nextOrder(list) {
@@ -271,6 +365,7 @@ export function addFolder(s, name, parent = null) {
 }
 
 export function addDoc(s, id, title, folder = null) {
+  if (s.hidden?.includes(id)) s.hidden = s.hidden.filter((x) => x !== id);
   if (s.docs[id]) {
     if (title && !s.docs[id].custom) s.docs[id].title = title;
     return false;
@@ -393,8 +488,15 @@ export async function fetchDocTitle(id) {
   }
 }
 
-// Abre o Doc: se já estiver aberto numa aba, vai até ela; senão abre uma aba nova.
-export async function openDoc(id) {
+// Abre o Doc. how: 'here' (nesta aba), 'new' (aba nova) ou padrão (vai até a aba se já estiver aberto).
+export async function openDoc(id, how) {
+  if (how === 'new') return chrome.tabs.create({ url: DOC_URL(id) });
+  if (how === 'here') {
+    const tab = await chrome.tabs.getCurrent().catch(() => null);
+    if (tab) return chrome.tabs.update(tab.id, { url: DOC_URL(id) });
+    window.top.location.href = DOC_URL(id);
+    return;
+  }
   const tabs = await chrome.tabs.query({ url: 'https://docs.google.com/document/*' });
   const tab = tabs.find((t) => docIdFromUrl(t.url) === id);
   if (tab) {
