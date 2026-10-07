@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pastas Docs</title>
+    <link rel="stylesheet" href="ui.css" />
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="top-row">
+        <h1>Pastas</h1>
+        <div class="top-actions">
+          <div class="seg" id="viewSeg">
+            <button data-view="list" title="Lista"><i data-icon="list"></i></button>
+            <button data-view="grid" title="Ícones"><i data-icon="grid"></i></button>
+          </div>
+          <button class="icon-btn" id="flowsBtn" title="Fluxos (mapa mental)"><i data-icon="flow"></i></button>
+          <button class="icon-btn" id="settingsBtn" title="Backup e sincronização"><i data-icon="gear"></i></button>
+        </div>
+      </div>
+      <label class="search">
+        <i data-icon="search"></i>
+        <input id="search" type="search" placeholder="Buscar pastas e documentos" autocomplete="off" />
+      </label>
+      <div class="top-row">
+        <div class="seg" id="sortSeg">
+          <button data-sort="name" title="Ordem alfabética automática">A–Z</button>
+          <button data-sort="manual" title="Arraste os itens para posicionar do seu jeito">Manual</button>
+        </div>
+        <button class="btn" id="newFolderBtn"><i data-icon="folderPlus"></i>Nova pasta</button>
+      </div>
+    </header>
+
+    <section id="active" class="active" hidden></section>
+    <nav id="crumbs" class="crumbs" hidden></nav>
+    <main id="content" class="content"></main>
+
+    <script type="module" src="sidepanel.js"></script>
+  </body>
+</html>

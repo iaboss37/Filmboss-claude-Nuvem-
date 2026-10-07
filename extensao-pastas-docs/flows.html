@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fluxos · Pastas Docs</title>
+    <link rel="icon" href="icons/icon32.png" />
+    <link rel="stylesheet" href="ui.css" />
+    <link rel="stylesheet" href="flows.css" />
+  </head>
+  <body>
+    <aside class="side">
+      <section class="side-sec">
+        <div class="side-head">
+          <h2>Fluxos</h2>
+          <button class="icon-btn" id="newBoardBtn" title="Novo fluxo"><i data-icon="plus"></i></button>
+        </div>
+        <div id="boards" class="boards"></div>
+      </section>
+      <section class="side-sec grow">
+        <div class="side-head">
+          <h2>Pastas</h2>
+          <button class="icon-btn" id="newFolderBtn" title="Nova pasta no fluxo"><i data-icon="folderPlus"></i></button>
+        </div>
+        <input id="folderSearch" class="text" type="search" placeholder="Buscar pasta" autocomplete="off" />
+        <div id="folders" class="folders"></div>
+        <p class="hint">Arraste uma pasta para o quadro. Puxe a bolinha da borda de um bloco até outro para criar uma seta.</p>
+      </section>
+    </aside>
+
+    <main class="stage">
+      <div class="stage-head">
+        <div class="board-title" id="boardTitle"></div>
+        <div class="tools">
+          <button class="icon-btn" id="snapBtn" title="Encaixar na grade"><i data-icon="grid"></i></button>
+          <span class="tool-sep"></span>
+          <button class="icon-btn" id="zoomOut" title="Diminuir zoom"><i data-icon="minus"></i></button>
+          <button class="zoom-val" id="zoomVal" title="Voltar para 100%">100%</button>
+          <button class="icon-btn" id="zoomIn" title="Aumentar zoom"><i data-icon="plus"></i></button>
+          <button class="icon-btn" id="fitBtn" title="Mostrar tudo"><i data-icon="fit"></i></button>
+        </div>
+      </div>
+      <div id="viewport" class="viewport">
+        <div id="world" class="world">
+          <svg id="edges" class="edges" width="20000" height="20000" viewBox="-10000 -10000 20000 20000">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0 0 L10 5 L0 10 z" style="fill: var(--text-3)" />
+              </marker>
+              <marker id="arrowSel" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0 0 L10 5 L0 10 z" style="fill: var(--accent)" />
+              </marker>
+            </defs>
+            <g id="edgeLayer"></g>
+            <path id="tempEdge" class="edge temp" marker-end="url(#arrowSel)" />
+          </svg>
+          <div id="nodes"></div>
+        </div>
+        <div id="emptyBoard" class="empty-board" hidden></div>
+      </div>
+    </main>
+
+    <script type="module" src="flows.js"></script>
+  </body>
+</html>

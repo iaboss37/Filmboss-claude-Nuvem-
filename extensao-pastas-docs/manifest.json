@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Pastas Docs",
+  "version": "1.0.0",
+  "description": "Organize seus Google Docs em pastas, num painel lateral, e monte fluxos em mapa mental.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1DR30O7+eFXcu05NbZc6Bgj1CtxhWdJh29NwVjfm5ynupCj7i//+64tz/EBSqVet1GSWgrSuLh0H+vROyfSbem4Wv4tSe3F3vm1gWXzwDBra9vOZlVU28nxltC4+fXQblRfqelEO9fnAfLixE31S6YJUPTE5EZw1eBSXERnZZ+BYhn0O/gazd/sEzL5AlTFt/OLml8btKrtXbxunSLtP424jv7DP4RE7q8ZFzHk2SkgLVL/qM7MwjSCgLdDtyagmXGeRMRKYoFpILi/Lp+vOKng89qIhhggJ/9nJy+wSiSkk2XkZG0bHf86Wq3+MVEM26m9/U8Ig8vmBfR2c9zJG/QIDAQAB",
+  "minimum_chrome_version": "116",
+  "permissions": ["storage", "sidePanel", "contextMenus"],
+  "host_permissions": ["https://docs.google.com/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_title": "Abrir Pastas Docs",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": { "default": "Alt+Shift+P" },
+      "description": "Abrir o painel de pastas"
+    }
+  }
+}
