@@ -1,0 +1,10 @@
+# Boss Motion: área de trabalho dos estudos e vídeos (pesados, fora do git)
+/boss-motion/
+# motor instalado dentro das skills de estilo e leitor de texto compilado no Mac
+.claude/skills/*/projeto/node_modules
+.claude/skills/*/projeto/venv
+.claude/skills/*/projeto/out
+.claude/skills/*/scripts/bin/textos
+__pycache__/
+.DS_Store
+._*

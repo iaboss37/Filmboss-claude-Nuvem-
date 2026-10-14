@@ -1,0 +1,27 @@
+{
+  "nome": "molde",
+  "fps": 24,
+  "largura": 1920,
+  "altura": 1080,
+  "curvas": {
+    "chegada": [0.16, 1, 0.3, 1],
+    "troca": [0.65, 0, 0.35, 1],
+    "saida": [0.7, 0, 0.84, 0]
+  },
+  "pop": { "existe": true, "excesso": 1.8 },
+  "tempos": {
+    "chegada": 6,
+    "saida": 4,
+    "pop": 3,
+    "palavra": 3,
+    "plano": 48,
+    "maxSemEvento": 12,
+    "batida": 0
+  },
+  "camera": { "aproximacao": [1, 1.03], "soco": 1.06, "socoQuadros": 4 },
+  "obturador": 0.5,
+  "emDois": false,
+  "cores": { "fundo": "#0E0D12", "texto": "#F7F0E3", "destaque": "#FFD12E" },
+  "fontes": [],
+  "sfx": {}
+}

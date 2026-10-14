@@ -1,0 +1,36 @@
+{
+  "name": "boss-estilo-molde",
+  "version": "1.0.0",
+  "description": "Projeto Remotion de um estilo de motion (gerado pela boss-motion-create)",
+  "private": true,
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@react-three/fiber": "9.3.0",
+    "@remotion/cli": "4.0.496",
+    "@remotion/google-fonts": "4.0.496",
+    "@remotion/layout-utils": "4.0.496",
+    "@remotion/lottie": "4.0.496",
+    "@remotion/media": "4.0.496",
+    "@remotion/motion-blur": "4.0.496",
+    "@remotion/noise": "4.0.496",
+    "@remotion/paths": "4.0.496",
+    "@remotion/three": "4.0.496",
+    "lottie-web": "5.13.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.496",
+    "three": "0.178.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.7",
+    "@types/three": "0.178.0",
+    "typescript": "5.9.3"
+  },
+  "scripts": {
+    "dev": "remotion studio src/index.ts --port=3160",
+    "lint": "tsc",
+    "previa": "node scripts/previa.mjs",
+    "final": "node scripts/final.mjs",
+    "quadros": "node scripts/quadros.mjs"
+  }
+}
